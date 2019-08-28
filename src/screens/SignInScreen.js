@@ -14,6 +14,8 @@ import {
   Animated
 } from 'react-native';
 import { Container, Item, Input, Icon } from 'native-base';
+// AWS Amplify
+import Auth from '@aws-amplify/auth';
 
 // Load the app logo
 const logo = require('../assets/images/logo.png');
@@ -51,10 +53,25 @@ export default class SignInScreen extends React.Component {
     this.setState({ [key]: value });
   }
 
-  signIn = async () => {
-    await AsyncStorage.setItem('userToken', '123456789');
-    this.props.navigation.navigate('Authloading');
-  };
+  // Sign in users with Auth
+  async signIn() {
+    const { username, password } = this.state;
+    await Auth.signIn(username, password)
+      .then(user => {
+        this.setState({ user });
+        this.props.navigation.navigate('Authloading');
+      })
+      .catch(err => {
+        if (!err.message) {
+          console.log('Error when signing in: ', err);
+          Alert.alert('Error when signing in: ', err);
+        } else {
+          console.log('Error when signing in: ', err.message);
+          Alert.alert('Error when signing in: ', err.message);
+        }
+      });
+  }
+
   render() {
     let { fadeOut, fadeIn, isHidden } = this.state;
     return (

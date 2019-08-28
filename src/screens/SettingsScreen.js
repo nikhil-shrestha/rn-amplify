@@ -13,6 +13,8 @@ import {
   Alert
 } from 'react-native';
 import { Container, Item, Input, Icon } from 'native-base';
+// AWS Amplify
+import Auth from '@aws-amplify/auth';
 
 export default class SettingsScreen extends React.Component {
   state = {
@@ -22,10 +24,51 @@ export default class SettingsScreen extends React.Component {
   onChangeText(key, value) {
     this.setState({ [key]: value });
   }
-  async singOut() {
-    await AsyncStorage.clear();
-    this.props.navigation.navigate('Authloading');
-  }
+  // Sign out from the app
+  signOutAlert = async () => {
+    await Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out from the app?',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Canceled'),
+          style: 'cancel'
+        },
+        // Calling signOut
+        { text: 'OK', onPress: () => this.signOut() }
+      ],
+      { cancelable: false }
+    );
+  };
+  // Confirm sign out
+  signOut = async () => {
+    await Auth.signOut()
+      .then(() => {
+        console.log('Sign out complete');
+        this.props.navigation.navigate('Authloading');
+      })
+      .catch(err => console.log('Error while signing out!', err));
+  };
+
+  // Change user password for the app
+  changePassword = async () => {
+    const { password1, password2 } = this.state;
+    await Auth.currentAuthenticatedUser()
+      .then(user => {
+        return Auth.changePassword(user, password1, password2);
+      })
+      .then(data => console.log('Password changed successfully', data))
+      .catch(err => {
+        if (!err.message) {
+          console.log('Error changing password: ', err);
+          Alert.alert('Error changing password: ', err);
+        } else {
+          console.log('Error changing password: ', err.message);
+          Alert.alert('Error changing password: ', err.message);
+        }
+      });
+  };
   render() {
     return (
       <SafeAreaView style={styles.container}>
@@ -87,7 +130,10 @@ export default class SettingsScreen extends React.Component {
                       }
                     />
                   </Item>
-                  <TouchableOpacity style={styles.buttonStyle}>
+                  <TouchableOpacity
+                    style={styles.buttonStyle}
+                    onPress={this.changePassword}
+                  >
                     <Text style={styles.buttonText}>Submit</Text>
                   </TouchableOpacity>
                   <View
@@ -111,7 +157,9 @@ export default class SettingsScreen extends React.Component {
                       name="md-power"
                       style={{ color: '#fff', paddingRight: 10 }}
                     />
-                    <Text style={styles.buttonText}>Sign out</Text>
+                    <Text style={styles.buttonText} onPress={this.signOutAlert}>
+                      Sign out
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </Container>

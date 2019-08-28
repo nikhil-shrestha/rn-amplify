@@ -15,6 +15,8 @@ import {
   Animated
 } from 'react-native';
 import { Container, Item, Input, Icon } from 'native-base';
+// AWS Amplify
+import Auth from '@aws-amplify/auth';
 
 import data from '../countryData';
 
@@ -35,7 +37,8 @@ export default class SignUpScreen extends React.Component {
     fadeOut: new Animated.Value(1), // Initial value for opacity: 1
     isHidden: false,
     flag: defaultFlag,
-    modalVisible: false
+    modalVisible: false,
+    authCode: '' // users will receive a confirmation code
   };
 
   componentDidMount() {
@@ -90,6 +93,66 @@ export default class SignUpScreen extends React.Component {
     } catch (err) {
       console.log(err);
     }
+  }
+
+  // Sign up user with AWS Amplify Auth
+  async signUp() {
+    const { username, password, email, phoneNumber } = this.state;
+    // rename variable to conform with Amplify Auth field phone attribute
+    const phone_number = phoneNumber;
+    await Auth.signUp({
+      username,
+      password,
+      attributes: { email, phone_number }
+    })
+      .then(() => {
+        console.log('sign up successful!');
+        Alert.alert('Enter the confirmation code you received.');
+      })
+      .catch(err => {
+        if (!err.message) {
+          console.log('Error when signing up: ', err);
+          Alert.alert('Error when signing up: ', err);
+        } else {
+          console.log('Error when signing up: ', err.message);
+          Alert.alert('Error when signing up: ', err.message);
+        }
+      });
+  }
+
+  // Confirm users and redirect them to the SignIn page
+  async confirmSignUp() {
+    const { username, authCode } = this.state;
+    await Auth.confirmSignUp(username, authCode)
+      .then(() => {
+        this.props.navigation.navigate('SignIn');
+        console.log('Confirm sign up successful');
+      })
+      .catch(err => {
+        if (!err.message) {
+          console.log('Error when entering confirmation code: ', err);
+          Alert.alert('Error when entering confirmation code: ', err);
+        } else {
+          console.log('Error when entering confirmation code: ', err.message);
+          Alert.alert('Error when entering confirmation code: ', err.message);
+        }
+      });
+  }
+
+  // Resend code if not received already
+  async resendSignUp() {
+    const { username } = this.state;
+    await Auth.resendSignUp(username)
+      .then(() => console.log('Confirmation code resent successfully'))
+      .catch(err => {
+        if (!err.message) {
+          console.log('Error requesting new confirmation code: ', err);
+          Alert.alert('Error requesting new confirmation code: ', err);
+        } else {
+          console.log('Error requesting new confirmation code: ', err.message);
+          Alert.alert('Error requesting new confirmation code: ', err.message);
+        }
+      });
   }
 
   render() {

@@ -10,6 +10,7 @@ import {
 } from 'react-navigation';
 
 import { Icon } from 'native-base';
+import Amplify from 'aws-amplify';
 
 // Auth stack screen imports
 import AuthLoadingScreen from './src/screens/AuthLoadingScreen';
@@ -22,6 +23,23 @@ import ForgetPasswordScreen from './src/screens/ForgetPasswordScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+
+import config from './aws-exports';
+
+Amplify.configure({
+  API: {
+    aws_appsync_region: config.graphql.REGION,
+    aws_appsync_graphqlEndpoint: config.graphql.URL,
+    aws_appsync_authenticationType: config.graphql.AUTHENTICATION_TYPE,
+    aws_appsync_apiKey: config.graphql.API_KEY
+  },
+  Auth: {
+    region: config.cognito.REGION,
+    userPoolId: config.cognito.USER_POOL_ID,
+    identityPoolId: config.cognito.IDENTITY_POOL_ID,
+    userPoolWebClientId: config.cognito.APP_CLIENT_ID
+  }
+});
 
 // Configurations and options for the AppTabNavigator
 const configurations = {
